@@ -16,7 +16,7 @@
         <!-- Sidebar Izquierdo de Navegación -->
         <aside id="sidebar" class="sidebar" aria-label="Menú de administración">
             <div class="sidebar-header">
-                <a href="Ecomarket.html" class="logo-link">
+                <a href="index.html" class="logo-link">
                     <span class="logo-text">Eco<span class="logo-accent">Market</span></span>
                 </a>
                 <span class="badge-role">Admin</span>
@@ -26,14 +26,14 @@
                 <ul class="sidebar-list">
                     <li><a href="#dashboard" class="sidebar-link active">📊 Dashboard</a></li>
                     <li><a href="#productos-section" class="sidebar-link">📦 Catálogo e Inventario</a></li>
-                    <li><a href="#productores" class="sidebar-link">🤝 Productores Aliados</a></li>
-                    <li><a href="#configuracion" class="sidebar-link">⚙️ Configuración</a></li>
+                    <li><a href="#productores-section" class="sidebar-link">🤝 Productores Aliados</a></li>
+                    <li><a href="#configuracion-section" class="sidebar-link">⚙️ Configuración</a></li>
                 </ul>
             </nav>
 
             <div class="sidebar-footer">
                 <span class="admin-user">Hola, Andrés</span>
-                <a href="Ecomarket.html" class="btn-logout">Cerrar Sesión</a>
+                <a href="index.html" class="btn-logout">Cerrar Sesión</a>
             </div>
         </aside>
 
@@ -54,7 +54,7 @@
                 </div>
             </header>
 
-            <div class="dashboard-content">
+            <div class="dashboard-content" id="dashboard">
                 <!-- Cabecera de bienvenida -->
                 <header class="content-header">
                     <div>
@@ -62,7 +62,7 @@
                         <p class="page-subtitle">Bienvenido de nuevo. Aquí tienes el estado actual del inventario de EcoMarket.</p>
                     </div>
                     <div class="quick-actions">
-                        <button type="button" class="btn btn-primary">+ Añadir Producto</button>
+                        <button type="button" class="btn btn-primary" id="add-product">+ Añadir Producto</button>
                     </div>
                 </header>
 
@@ -72,24 +72,24 @@
                         <div class="kpi-icon" aria-hidden="true">📦</div>
                         <div class="kpi-info">
                             <h3 class="kpi-title">Productos Registrados</h3>
-                            <span class="kpi-value">35</span>
-                            <p class="kpi-desc">Total activos en plataforma</p>
+                            <span class="kpi-value" id="products-count">5</span>
+                            <p class="kpi-desc">Productos en este catálogo</p>
                         </div>
                     </article>
                     <article class="kpi-card kpi-alert">
                         <div class="kpi-icon" aria-hidden="true">⚠️</div>
                         <div class="kpi-info">
                             <h3 class="kpi-title">Inventario Bajo</h3>
-                            <span class="kpi-value">4</span>
-                            <p class="kpi-desc">Requieren reabastecimiento</p>
+                            <span class="kpi-value" id="low-stock-count">1</span>
+                            <p class="kpi-desc">Productos con stock bajo</p>
                         </div>
                     </article>
                     <article class="kpi-card">
                         <div class="kpi-icon" aria-hidden="true">💰</div>
                         <div class="kpi-info">
                             <h3 class="kpi-title">Valor del Inventario</h3>
-                            <span class="kpi-value">$2.450.000</span>
-                            <p class="kpi-desc">Valorización total en COP</p>
+                            <span class="kpi-value" id="inventory-value">$1.480.000</span>
+                            <p class="kpi-desc">Precio × unidades en stock</p>
                         </div>
                     </article>
                 </section>
@@ -106,7 +106,6 @@
                         <table class="tabla-productos">
                             <thead>
                                 <tr>
-                                    <th scope="col">Código</th>
                                     <th scope="col">Producto</th>
                                     <th scope="col">Categoría</th>
                                     <th scope="col">Precio COP</th>
@@ -116,10 +115,10 @@
                                     <th scope="col" class="th-acciones">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="products-table-body">
                                 <tr>
-                                    <td class="td-codigo">ECO001</td>
                                     <td class="td-producto">
+                                        <span class="td-codigo">ECO001</span>
                                         <strong>Miel de abejas</strong>
                                         <span class="variante">500 g</span>
                                     </td>
@@ -134,8 +133,8 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="td-codigo">ECO002</td>
                                     <td class="td-producto">
+                                        <span class="td-codigo">ECO002</span>
                                         <strong>Café orgánico</strong>
                                         <span class="variante">340 g</span>
                                     </td>
@@ -150,8 +149,8 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="td-codigo">ECO003</td>
                                     <td class="td-producto">
+                                        <span class="td-codigo">ECO003</span>
                                         <strong>Jabón artesanal</strong>
                                     </td>
                                     <td>Cuidado personal</td>
@@ -165,8 +164,8 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="td-codigo">ECO004</td>
                                     <td class="td-producto">
+                                        <span class="td-codigo">ECO004</span>
                                         <strong>Canasta de verduras</strong>
                                     </td>
                                     <td>Frutas y verduras</td>
@@ -180,8 +179,8 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="td-codigo">ECO005</td>
                                     <td class="td-producto">
+                                        <span class="td-codigo">ECO005</span>
                                         <strong>Bolsa reutilizable</strong>
                                     </td>
                                     <td>Hogar sostenible</td>
@@ -199,9 +198,68 @@
                     </div>
                 </section>
 
+                <section id="productores-section" class="dashboard-panel">
+                    <div class="inventario-header">
+                        <h2 class="inventario-titulo">Productores aliados</h2>
+                        <span class="inventario-subtitulo">Productores presentes en el catálogo actual.</span>
+                    </div>
+                    <ul id="producer-summary" class="producer-list"></ul>
+                </section>
+
+                <section id="configuracion-section" class="dashboard-panel">
+                    <div class="inventario-header">
+                        <h2 class="inventario-titulo">Configuración</h2>
+                        <span class="inventario-subtitulo">Preferencias de administración del catálogo.</span>
+                    </div>
+                    <label class="setting-option">
+                        <input id="confirm-delete" type="checkbox" checked>
+                        Confirmar antes de eliminar un producto
+                    </label>
+                </section>
+
             </div>
         </main>
     </div>
 
+    <dialog id="product-dialog" class="product-dialog" aria-labelledby="product-dialog-title">
+        <form id="product-form" class="product-form">
+            <div class="dialog-header">
+                <h2 id="product-dialog-title">Añadir producto</h2>
+                <button type="button" id="close-product-dialog" class="dialog-close" aria-label="Cerrar formulario">×</button>
+            </div>
+            <label>
+                Producto
+                <input name="name" type="text" required maxlength="80">
+            </label>
+            <label>
+                Presentación (opcional)
+                <input name="variant" type="text" maxlength="40" placeholder="Ej. 500 g">
+            </label>
+            <label>
+                Categoría
+                <input name="category" type="text" required maxlength="60">
+            </label>
+            <div class="form-row">
+                <label>
+                    Precio COP
+                    <input name="price" type="number" required min="1" step="1">
+                </label>
+                <label>
+                    Stock
+                    <input name="stock" type="number" required min="0" step="1">
+                </label>
+            </div>
+            <label>
+                Productor
+                <input name="producer" type="text" required maxlength="80">
+            </label>
+            <div class="dialog-actions">
+                <button type="button" id="cancel-product-dialog" class="btn btn-outline">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar producto</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="dashboard.js" defer></script>
 </body>
 </html>
