@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de administración de EcoMarket para gestión de catálogo e inventario.">
+    <title>Dashboard Administrador | EcoMarket</title>
+    <!-- Vinculamos los estilos generales y del dashboard -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dashboard-body">
+
+    <!-- Wrapper principal del Dashboard (Grid de Sidebar + Contenido) -->
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Izquierdo de Navegación -->
+        <aside id="sidebar" class="sidebar" aria-label="Menú de administración">
+            <div class="sidebar-header">
+                <a href="Ecomarket.html" class="logo-link">
+                    <span class="logo-text">Eco<span class="logo-accent">Market</span></span>
+                </a>
+                <span class="badge-role">Admin</span>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul class="sidebar-list">
+                    <li><a href="#dashboard" class="sidebar-link active">📊 Dashboard</a></li>
+                    <li><a href="#productos-section" class="sidebar-link">📦 Catálogo e Inventario</a></li>
+                    <li><a href="#productores" class="sidebar-link">🤝 Productores Aliados</a></li>
+                    <li><a href="#configuracion" class="sidebar-link">⚙️ Configuración</a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <span class="admin-user">Hola, Andrés</span>
+                <a href="Ecomarket.html" class="btn-logout">Cerrar Sesión</a>
+            </div>
+        </aside>
+
+        <!-- Área Principal de Contenido -->
+        <main class="dashboard-main">
+            
+            <!-- Topbar (Barra superior con menú hamburguesa y perfil) -->
+            <header class="topbar">
+                <button id="menu-toggle" class="menu-toggle-btn" aria-expanded="false" aria-controls="sidebar" aria-label="Abrir menú de navegación">
+                    ☰
+                </button>
+                <div class="topbar-search">
+                    <input type="search" placeholder="Buscar producto, SKU o productor..." class="search-input" aria-label="Buscar en el panel">
+                </div>
+                <div class="topbar-profile">
+                    <span class="notification-icon" aria-label="Notificaciones">🔔</span>
+                    <div class="avatar-admin" aria-hidden="true">AG</div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <!-- Cabecera de bienvenida -->
+                <header class="content-header">
+                    <div>
+                        <h1 class="page-title">Panel de Control</h1>
+                        <p class="page-subtitle">Bienvenido de nuevo. Aquí tienes el estado actual del inventario de EcoMarket.</p>
+                    </div>
+                    <div class="quick-actions">
+                        <button type="button" class="btn btn-primary">+ Añadir Producto</button>
+                    </div>
+                </header>
+
+                <!-- Fila de Tarjetas KPI (Indicadores Clave) -->
+                <section class="kpi-grid">
+                    <article class="kpi-card">
+                        <div class="kpi-icon" aria-hidden="true">📦</div>
+                        <div class="kpi-info">
+                            <h3 class="kpi-title">Productos Registrados</h3>
+                            <span class="kpi-value">35</span>
+                            <p class="kpi-desc">Total activos en plataforma</p>
+                        </div>
+                    </article>
+                    <article class="kpi-card kpi-alert">
+                        <div class="kpi-icon" aria-hidden="true">⚠️</div>
+                        <div class="kpi-info">
+                            <h3 class="kpi-title">Inventario Bajo</h3>
+                            <span class="kpi-value">4</span>
+                            <p class="kpi-desc">Requieren reabastecimiento</p>
+                        </div>
+                    </article>
+                    <article class="kpi-card">
+                        <div class="kpi-icon" aria-hidden="true">💰</div>
+                        <div class="kpi-info">
+                            <h3 class="kpi-title">Valor del Inventario</h3>
+                            <span class="kpi-value">$2.450.000</span>
+                            <p class="kpi-desc">Valorización total en COP</p>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- Sección de Tabla de Productos / Inventario (Punto del Taller) -->
+                <section id="productos-section" class="inventario-section">
+                    <div class="inventario-header">
+                        <h2 class="inventario-titulo">Gestión de Inventario y Catálogo</h2>
+                        <span class="inventario-subtitulo">Listado detallado de productos, estados y control operativo.</span>
+                    </div>
+
+                    <!-- Contenedor responsive para desplazamiento horizontal en móviles -->
+                    <div class="tabla-responsive-container">
+                        <table class="tabla-productos">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Código</th>
+                                    <th scope="col">Producto</th>
+                                    <th scope="col">Categoría</th>
+                                    <th scope="col">Precio COP</th>
+                                    <th scope="col">Stock</th>
+                                    <th scope="col">Productor</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col" class="th-acciones">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="td-codigo">ECO001</td>
+                                    <td class="td-producto">
+                                        <strong>Miel de abejas</strong>
+                                        <span class="variante">500 g</span>
+                                    </td>
+                                    <td>Despensa</td>
+                                    <td class="td-precio">$28.000</td>
+                                    <td>18</td>
+                                    <td>Apiario La Montaña</td>
+                                    <td><span class="badge badge-disponible">Disponible</span></td>
+                                    <td class="td-acciones">
+                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO001">Editar</button>
+                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO001">Eliminar</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="td-codigo">ECO002</td>
+                                    <td class="td-producto">
+                                        <strong>Café orgánico</strong>
+                                        <span class="variante">340 g</span>
+                                    </td>
+                                    <td>Despensa</td>
+                                    <td class="td-precio">$32.000</td>
+                                    <td>5</td>
+                                    <td>Café El Roble</td>
+                                    <td><span class="badge badge-stock-bajo">Stock bajo</span></td>
+                                    <td class="td-acciones">
+                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO002">Editar</button>
+                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO002">Eliminar</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="td-codigo">ECO003</td>
+                                    <td class="td-producto">
+                                        <strong>Jabón artesanal</strong>
+                                    </td>
+                                    <td>Cuidado personal</td>
+                                    <td class="td-precio">$14.000</td>
+                                    <td>24</td>
+                                    <td>Manos de Tierra</td>
+                                    <td><span class="badge badge-disponible">Disponible</span></td>
+                                    <td class="td-acciones">
+                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO003">Editar</button>
+                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO003">Eliminar</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="td-codigo">ECO004</td>
+                                    <td class="td-producto">
+                                        <strong>Canasta de verduras</strong>
+                                    </td>
+                                    <td>Frutas y verduras</td>
+                                    <td class="td-precio">$35.000</td>
+                                    <td>0</td>
+                                    <td>Huerta Viva</td>
+                                    <td><span class="badge badge-agotado">Agotado</span></td>
+                                    <td class="td-acciones">
+                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO004">Editar</button>
+                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO004">Eliminar</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="td-codigo">ECO005</td>
+                                    <td class="td-producto">
+                                        <strong>Bolsa reutilizable</strong>
+                                    </td>
+                                    <td>Hogar sostenible</td>
+                                    <td class="td-precio">$12.000</td>
+                                    <td>40</td>
+                                    <td>EcoTextil</td>
+                                    <td><span class="badge badge-disponible">Disponible</span></td>
+                                    <td class="td-acciones">
+                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO005">Editar</button>
+                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO005">Eliminar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>
