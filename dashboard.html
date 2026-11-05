@@ -62,17 +62,17 @@
                         <p class="page-subtitle">Bienvenido de nuevo. Aquí tienes el estado actual del inventario de EcoMarket.</p>
                     </div>
                     <div class="quick-actions">
-                        <button type="button" class="btn btn-primary" id="add-product">+ Añadir Producto</button>
+                        <button type="button" class="btn btn-primary" id="add-product" disabled>+ Añadir Producto</button>
                     </div>
                 </header>
 
                 <!-- Fila de Tarjetas KPI (Indicadores Clave) -->
-                <section class="kpi-grid">
+                <section class="kpi-grid" aria-label="Indicadores clave de desempeño">
                     <article class="kpi-card">
                         <div class="kpi-icon" aria-hidden="true">📦</div>
                         <div class="kpi-info">
                             <h3 class="kpi-title">Productos Registrados</h3>
-                            <span class="kpi-value" id="products-count">5</span>
+                            <span class="kpi-value" id="products-count">0</span>
                             <p class="kpi-desc">Productos en este catálogo</p>
                         </div>
                     </article>
@@ -80,7 +80,7 @@
                         <div class="kpi-icon" aria-hidden="true">⚠️</div>
                         <div class="kpi-info">
                             <h3 class="kpi-title">Inventario Bajo</h3>
-                            <span class="kpi-value" id="low-stock-count">1</span>
+                            <span class="kpi-value" id="low-stock-count">0</span>
                             <p class="kpi-desc">Productos con stock bajo</p>
                         </div>
                     </article>
@@ -88,7 +88,7 @@
                         <div class="kpi-icon" aria-hidden="true">💰</div>
                         <div class="kpi-info">
                             <h3 class="kpi-title">Valor del Inventario</h3>
-                            <span class="kpi-value" id="inventory-value">$1.480.000</span>
+                            <span class="kpi-value" id="inventory-value">$0</span>
                             <p class="kpi-desc">Precio × unidades en stock</p>
                         </div>
                     </article>
@@ -100,6 +100,9 @@
                         <h2 class="inventario-titulo">Gestión de Inventario y Catálogo</h2>
                         <span class="inventario-subtitulo">Listado detallado de productos, estados y control operativo.</span>
                     </div>
+                    <p id="dataset-status" class="dataset-status" role="status" aria-live="polite">
+                        Cargando y validando el catálogo...
+                    </p>
 
                     <!-- Contenedor responsive para desplazamiento horizontal en móviles -->
                     <div class="tabla-responsive-container">
@@ -115,85 +118,7 @@
                                     <th scope="col" class="th-acciones">Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody id="products-table-body">
-                                <tr>
-                                    <td class="td-producto">
-                                        <span class="td-codigo">ECO001</span>
-                                        <strong>Miel de abejas</strong>
-                                        <span class="variante">500 g</span>
-                                    </td>
-                                    <td>Despensa</td>
-                                    <td class="td-precio">$28.000</td>
-                                    <td>18</td>
-                                    <td>Apiario La Montaña</td>
-                                    <td><span class="badge badge-disponible">Disponible</span></td>
-                                    <td class="td-acciones">
-                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO001">Editar</button>
-                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO001">Eliminar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="td-producto">
-                                        <span class="td-codigo">ECO002</span>
-                                        <strong>Café orgánico</strong>
-                                        <span class="variante">340 g</span>
-                                    </td>
-                                    <td>Despensa</td>
-                                    <td class="td-precio">$32.000</td>
-                                    <td>5</td>
-                                    <td>Café El Roble</td>
-                                    <td><span class="badge badge-stock-bajo">Stock bajo</span></td>
-                                    <td class="td-acciones">
-                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO002">Editar</button>
-                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO002">Eliminar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="td-producto">
-                                        <span class="td-codigo">ECO003</span>
-                                        <strong>Jabón artesanal</strong>
-                                    </td>
-                                    <td>Cuidado personal</td>
-                                    <td class="td-precio">$14.000</td>
-                                    <td>24</td>
-                                    <td>Manos de Tierra</td>
-                                    <td><span class="badge badge-disponible">Disponible</span></td>
-                                    <td class="td-acciones">
-                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO003">Editar</button>
-                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO003">Eliminar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="td-producto">
-                                        <span class="td-codigo">ECO004</span>
-                                        <strong>Canasta de verduras</strong>
-                                    </td>
-                                    <td>Frutas y verduras</td>
-                                    <td class="td-precio">$35.000</td>
-                                    <td>0</td>
-                                    <td>Huerta Viva</td>
-                                    <td><span class="badge badge-agotado">Agotado</span></td>
-                                    <td class="td-acciones">
-                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO004">Editar</button>
-                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO004">Eliminar</button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="td-producto">
-                                        <span class="td-codigo">ECO005</span>
-                                        <strong>Bolsa reutilizable</strong>
-                                    </td>
-                                    <td>Hogar sostenible</td>
-                                    <td class="td-precio">$12.000</td>
-                                    <td>40</td>
-                                    <td>EcoTextil</td>
-                                    <td><span class="badge badge-disponible">Disponible</span></td>
-                                    <td class="td-acciones">
-                                        <button type="button" class="btn-accion btn-editar" aria-label="Editar ECO005">Editar</button>
-                                        <button type="button" class="btn-accion btn-eliminar" aria-label="Eliminar ECO005">Eliminar</button>
-                                    </td>
-                                </tr>
-                            </tbody>
+                            <tbody id="products-table-body"></tbody>
                         </table>
                     </div>
                 </section>
@@ -229,29 +154,57 @@
             </div>
             <label>
                 Producto
-                <input name="name" type="text" required maxlength="80">
-            </label>
-            <label>
-                Presentación (opcional)
-                <input name="variant" type="text" maxlength="40" placeholder="Ej. 500 g">
+                <input name="nombre" type="text" required minlength="3" maxlength="80">
             </label>
             <label>
                 Categoría
-                <input name="category" type="text" required maxlength="60">
+                <select name="categoria" required>
+                    <option value="">Selecciona una categoría</option>
+                    <option>Frutas y verduras</option>
+                    <option>Despensa</option>
+                    <option>Cuidado personal</option>
+                    <option>Hogar sostenible</option>
+                </select>
             </label>
             <div class="form-row">
                 <label>
                     Precio COP
-                    <input name="price" type="number" required min="1" step="1">
+                    <input name="precio" type="number" required min="1" step="1">
                 </label>
                 <label>
                     Stock
                     <input name="stock" type="number" required min="0" step="1">
                 </label>
+                <label>
+                    Stock mínimo
+                    <input name="stockMinimo" type="number" required min="0" step="1">
+                </label>
             </div>
             <label>
                 Productor
-                <input name="producer" type="text" required maxlength="80">
+                <input name="productor" type="text" required minlength="3" maxlength="80">
+            </label>
+            <label>
+                Ciudad
+                <select name="ciudad" required>
+                    <option value="">Selecciona una ciudad</option>
+                    <option>Bucaramanga</option>
+                    <option>Floridablanca</option>
+                    <option>Girón</option>
+                    <option>Bogotá</option>
+                    <option>Medellín</option>
+                    <option>Cali</option>
+                    <option>Tunja</option>
+                    <option>Cúcuta</option>
+                </select>
+            </label>
+            <label>
+                Fecha de registro
+                <input name="fechaRegistro" type="date" min="2026-01-01" max="2026-11-03" required>
+            </label>
+            <label class="setting-option">
+                <input name="organico" type="checkbox">
+                Producto orgánico
             </label>
             <div class="dialog-actions">
                 <button type="button" id="cancel-product-dialog" class="btn btn-outline">Cancelar</button>
@@ -260,6 +213,8 @@
         </form>
     </dialog>
 
+    <script src="validacion.js" defer></script>
+    <script src="productos-ejemplo.js" defer></script>
     <script src="dashboard.js" defer></script>
 </body>
 </html>

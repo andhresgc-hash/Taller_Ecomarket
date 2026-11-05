@@ -7,38 +7,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const productDialog = document.getElementById('product-dialog');
     const productForm = document.getElementById('product-form');
     const confirmDelete = document.getElementById('confirm-delete');
+    const datasetStatus = document.getElementById('dataset-status');
+    const storageKey = 'ecomarket-products-v2';
+    const numberFormat = new Intl.NumberFormat('es-CO');
+    const validator = window.validarProductos;
 
-    if (!menuToggle || !sidebar || !tableBody || !productDialog || !productForm) {
+    if (
+        !menuToggle
+        || !sidebar
+        || !tableBody
+        || !productDialog
+        || !productForm
+        || !datasetStatus
+        || !Array.isArray(window.productosEjemplo)
+        || typeof validator !== 'function'
+    ) {
         return;
     }
 
-    const numberFormat = new Intl.NumberFormat('es-CO');
-    const products = [...tableBody.querySelectorAll('tr')].map((row) => {
-        const cells = row.cells;
-        const productCell = cells[0];
+    const exampleErrors = validator(window.productosEjemplo);
+    if (exampleErrors.length > 0) {
+        showStatus(
+            `Los cinco registros de ejemplo no pasaron la validación: ${exampleErrors.map((error) => `${error.campo}: ${error.descripcion}`).join(' ')}`,
+            true
+        );
+        return;
+    }
 
-        return {
-            code: productCell.querySelector('.td-codigo').textContent.trim(),
-            name: productCell.querySelector('strong').textContent.trim(),
-            variant: productCell.querySelector('.variante')?.textContent.trim() || '',
-            category: cells[1].textContent.trim(),
-            price: Number(cells[2].textContent.replace(/\D/g, '')),
-            stock: Number(cells[3].textContent.trim()),
-            producer: cells[4].textContent.trim()
-        };
-    });
+    let products = [];
+    let editingId = null;
+    let nextProductId = 1;
 
-    let editingCode = null;
-    let nextProductNumber = products.reduce((highest, product) => {
-        const match = product.code.match(/\d+$/);
-        return Math.max(highest, match ? Number(match[0]) : 0);
-    }, 0) + 1;
+    function showStatus(message, isError = false) {
+        datasetStatus.textContent = message;
+        datasetStatus.classList.toggle('is-error', isError);
+        datasetStatus.classList.toggle('is-success', !isError);
+        datasetStatus.setAttribute('role', isError ? 'alert' : 'status');
+    }
 
-    function getProductStatus(stock) {
-        if (stock === 0) {
+    function showValidationErrors(errors) {
+        const details = errors
+            .map((error) => `ID ${error.id}, ${error.campo}: ${error.descripcion}`)
+            .join(' ');
+        showStatus(`El catálogo no pasó la validación. ${details}`, true);
+    }
+
+    function getProductStatus(product) {
+        if (product.stock === 0) {
             return { label: 'Agotado', className: 'badge-agotado' };
         }
-        if (stock <= 5) {
+        if (product.stock <= product.stockMinimo) {
             return { label: 'Stock bajo', className: 'badge-stock-bajo' };
         }
         return { label: 'Disponible', className: 'badge-disponible' };
@@ -47,15 +65,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderProducts() {
         const query = searchInput?.value.trim().toLocaleLowerCase('es') || '';
         const visibleProducts = products.filter((product) => {
-            const status = getProductStatus(product.stock).label;
+            if (!product.activo) {
+                return false;
+            }
+            const status = getProductStatus(product).label;
             const searchableText = [
-                product.code,
-                product.name,
-                product.variant,
-                product.category,
-                product.price,
+                product.id,
+                product.nombre,
+                product.categoria,
+                product.precio,
                 product.stock,
-                product.producer,
+                product.stockMinimo,
+                product.productor,
+                product.ciudad,
+                product.organico ? 'orgánico' : 'convencional',
                 status
             ].join(' ').toLocaleLowerCase('es');
             return searchableText.includes(query);
@@ -68,7 +91,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const cell = document.createElement('td');
             cell.colSpan = 7;
             cell.className = 'empty-table-message';
-            cell.textContent = 'No se encontraron productos.';
+            cell.textContent = query
+                ? 'No se encontraron productos con esa búsqueda.'
+                : 'No hay productos activos para mostrar.';
             row.append(cell);
             tableBody.append(row);
         }
@@ -78,60 +103,47 @@ document.addEventListener('DOMContentLoaded', () => {
             const productCell = document.createElement('td');
             const code = document.createElement('span');
             const name = document.createElement('strong');
-            const variant = document.createElement('span');
+            const categoryCell = document.createElement('td');
+            const priceCell = document.createElement('td');
+            const stockCell = document.createElement('td');
+            const producerCell = document.createElement('td');
+            const statusCell = document.createElement('td');
+            const actionsCell = document.createElement('td');
+            const statusBadge = document.createElement('span');
+            const editButton = document.createElement('button');
+            const deleteButton = document.createElement('button');
+            const status = getProductStatus(product);
 
             productCell.className = 'td-producto';
             code.className = 'td-codigo';
-            code.textContent = product.code;
-            name.textContent = product.name;
-            variant.className = 'variante';
-            variant.textContent = product.variant;
+            code.textContent = `ECO${String(product.id).padStart(3, '0')}`;
+            name.textContent = product.nombre;
             productCell.append(code, name);
-            if (product.variant) {
-                productCell.append(variant);
-            }
-            row.append(productCell);
 
-            [
-                product.category,
-                `$${numberFormat.format(product.price)}`,
-                String(product.stock),
-                product.producer
-            ].forEach((value, index) => {
-                const cell = document.createElement('td');
-                cell.textContent = value;
-                if (index === 1) {
-                    cell.className = 'td-precio';
-                }
-                row.append(cell);
-            });
-
-            const statusCell = document.createElement('td');
-            const statusBadge = document.createElement('span');
-            const status = getProductStatus(product.stock);
+            categoryCell.textContent = product.categoria;
+            priceCell.className = 'td-precio';
+            priceCell.textContent = `$${numberFormat.format(product.precio)}`;
+            stockCell.textContent = String(product.stock);
+            producerCell.textContent = `${product.productor} · ${product.ciudad}`;
             statusBadge.className = `badge ${status.className}`;
             statusBadge.textContent = status.label;
             statusCell.append(statusBadge);
-            row.append(statusCell);
 
-            const actionsCell = document.createElement('td');
-            const editButton = document.createElement('button');
-            const deleteButton = document.createElement('button');
             actionsCell.className = 'td-acciones';
             editButton.type = 'button';
             editButton.className = 'btn-accion btn-editar';
             editButton.dataset.action = 'edit';
-            editButton.dataset.code = product.code;
-            editButton.setAttribute('aria-label', `Editar ${product.code}`);
+            editButton.dataset.id = String(product.id);
+            editButton.setAttribute('aria-label', `Editar ECO${String(product.id).padStart(3, '0')}`);
             editButton.textContent = 'Editar';
             deleteButton.type = 'button';
             deleteButton.className = 'btn-accion btn-eliminar';
             deleteButton.dataset.action = 'delete';
-            deleteButton.dataset.code = product.code;
-            deleteButton.setAttribute('aria-label', `Eliminar ${product.code}`);
+            deleteButton.dataset.id = String(product.id);
+            deleteButton.setAttribute('aria-label', `Eliminar ECO${String(product.id).padStart(3, '0')}`);
             deleteButton.textContent = 'Eliminar';
             actionsCell.append(editButton, deleteButton);
-            row.append(actionsCell);
+            row.append(productCell, categoryCell, priceCell, stockCell, producerCell, statusCell, actionsCell);
             tableBody.append(row);
         });
 
@@ -139,21 +151,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSummary() {
-        const lowStockCount = products.filter((product) => product.stock > 0 && product.stock <= 5).length;
-        const inventoryValue = products.reduce((total, product) => total + product.price * product.stock, 0);
-        const productsCount = document.getElementById('products-count');
-        const lowStockElement = document.getElementById('low-stock-count');
-        const inventoryValueElement = document.getElementById('inventory-value');
+        const activeProducts = products.filter((product) => product.activo);
+        const lowStockCount = activeProducts.filter(
+            (product) => product.stock > 0 && product.stock <= product.stockMinimo
+        ).length;
+        const inventoryValue = activeProducts.reduce(
+            (total, product) => total + product.precio * product.stock,
+            0
+        );
 
-        productsCount.textContent = String(products.length);
-        lowStockElement.textContent = String(lowStockCount);
-        inventoryValueElement.textContent = `$${numberFormat.format(inventoryValue)}`;
+        document.getElementById('products-count').textContent = String(activeProducts.length);
+        document.getElementById('low-stock-count').textContent = String(lowStockCount);
+        document.getElementById('inventory-value').textContent = `$${numberFormat.format(inventoryValue)}`;
 
         const producerSummary = document.getElementById('producer-summary');
         if (producerSummary) {
             const producerCounts = new Map();
-            products.forEach((product) => {
-                producerCounts.set(product.producer, (producerCounts.get(product.producer) || 0) + 1);
+            activeProducts.forEach((product) => {
+                producerCounts.set(product.productor, (producerCounts.get(product.productor) || 0) + 1);
             });
             producerSummary.replaceChildren();
             producerCounts.forEach((count, producer) => {
@@ -173,18 +188,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function openProductDialog(product = null) {
         productForm.reset();
-        editingCode = product?.code || null;
+        editingId = product?.id ?? null;
         document.getElementById('product-dialog-title').textContent = product
-            ? `Editar ${product.code}`
+            ? `Editar ECO${String(product.id).padStart(3, '0')}`
             : 'Añadir producto';
-        productForm.elements.namedItem('name').value = product?.name || '';
-        productForm.elements.namedItem('variant').value = product?.variant || '';
-        productForm.elements.namedItem('category').value = product?.category || '';
-        productForm.elements.namedItem('price').value = product?.price ?? '';
+        productForm.elements.namedItem('nombre').value = product?.nombre || '';
+        productForm.elements.namedItem('categoria').value = product?.categoria || '';
+        productForm.elements.namedItem('precio').value = product?.precio ?? '';
         productForm.elements.namedItem('stock').value = product?.stock ?? '';
-        productForm.elements.namedItem('producer').value = product?.producer || '';
+        productForm.elements.namedItem('stockMinimo').value = product?.stockMinimo ?? '';
+        productForm.elements.namedItem('productor').value = product?.productor || '';
+        productForm.elements.namedItem('ciudad').value = product?.ciudad || '';
+        productForm.elements.namedItem('fechaRegistro').value = product?.fechaRegistro || '2026-11-03';
+        productForm.elements.namedItem('organico').checked = product?.organico ?? false;
         productDialog.showModal();
-        productForm.elements.namedItem('name').focus();
+        productForm.elements.namedItem('nombre').focus();
+    }
+
+    function persistProducts(nextProducts) {
+        const errors = validator(nextProducts);
+        if (errors.length > 0) {
+            showValidationErrors(errors);
+            return false;
+        }
+
+        try {
+            localStorage.setItem(storageKey, JSON.stringify(nextProducts));
+        } catch (error) {
+            showStatus(`No se pudo guardar el catálogo en este navegador: ${error.message}`, true);
+            return false;
+        }
+
+        products = nextProducts;
+        nextProductId = products.reduce((highest, product) => Math.max(highest, product.id), 0) + 1;
+        renderProducts();
+        showStatus('Cambios guardados en este navegador.');
+        return true;
+    }
+
+    async function loadProducts() {
+        addProductButton.disabled = true;
+        try {
+            const response = await fetch('productos.json');
+            if (!response.ok) {
+                throw new Error(`No se pudo cargar productos.json (HTTP ${response.status}).`);
+            }
+
+            const catalog = await response.json();
+            const catalogErrors = validator(catalog);
+            if (catalogErrors.length > 0) {
+                showValidationErrors(catalogErrors);
+                return;
+            }
+
+            const catalogById = new Map(catalog.map((product) => [product.id, product]));
+            const examplesMatchCatalog = window.productosEjemplo.every((example) => {
+                const catalogProduct = catalogById.get(example.id);
+                return catalogProduct
+                    && Object.keys(example).length === Object.keys(catalogProduct).length
+                    && Object.entries(example).every(([key, value]) => catalogProduct[key] === value);
+            });
+            if (!examplesMatchCatalog) {
+                showStatus('Los cinco ejemplos deben coincidir con los registros 1 a 5 de productos.json.', true);
+                return;
+            }
+
+            const exampleIds = new Set(window.productosEjemplo.map((product) => product.id));
+            const mergedCatalog = [
+                ...window.productosEjemplo,
+                ...catalog.filter((product) => !exampleIds.has(product.id))
+            ];
+            if (mergedCatalog.length !== catalog.length) {
+                showStatus('No se pudieron integrar los ejemplos sin duplicar registros del catálogo.', true);
+                return;
+            }
+            const mergedErrors = validator(mergedCatalog);
+            if (mergedErrors.length > 0) {
+                showValidationErrors(mergedErrors);
+                return;
+            }
+
+            products = mergedCatalog;
+            try {
+                const savedCatalog = localStorage.getItem(storageKey);
+                if (savedCatalog !== null) {
+                    const parsedCatalog = JSON.parse(savedCatalog);
+                    const savedErrors = validator(parsedCatalog);
+                    if (savedErrors.length > 0) {
+                        showValidationErrors(savedErrors);
+                        return;
+                    }
+                    products = parsedCatalog;
+                }
+            } catch (error) {
+                showStatus(`No se pudieron leer los cambios guardados: ${error.message}`, true);
+                return;
+            }
+
+            nextProductId = products.reduce((highest, product) => Math.max(highest, product.id), 0) + 1;
+            renderProducts();
+            addProductButton.disabled = false;
+            showStatus(`Catálogo cargado y validado: ${products.filter((product) => product.activo).length} productos activos.`);
+        } catch (error) {
+            showStatus(`No se pudo iniciar el catálogo. Abre el proyecto con Live Server y verifica productos.json. ${error.message}`, true);
+            console.error(error);
+        }
     }
 
     menuToggle.addEventListener('click', (event) => {
@@ -203,6 +311,12 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', closeMenu);
     });
 
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeMenu();
+        }
+    });
+
     document.addEventListener('click', (event) => {
         if (
             window.innerWidth < 1024
@@ -219,34 +333,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    addProductButton?.addEventListener('click', () => openProductDialog());
+    addProductButton.addEventListener('click', () => openProductDialog());
     document.getElementById('close-product-dialog').addEventListener('click', () => productDialog.close());
     document.getElementById('cancel-product-dialog').addEventListener('click', () => productDialog.close());
     searchInput?.addEventListener('input', renderProducts);
 
     productForm.addEventListener('submit', (event) => {
         event.preventDefault();
-        const formData = new FormData(productForm);
-        const productData = {
-            name: formData.get('name').trim(),
-            variant: formData.get('variant').trim(),
-            category: formData.get('category').trim(),
-            price: Number(formData.get('price')),
-            stock: Number(formData.get('stock')),
-            producer: formData.get('producer').trim()
-        };
-
-        if (editingCode) {
-            const product = products.find((item) => item.code === editingCode);
-            Object.assign(product, productData);
-        } else {
-            const code = `ECO${String(nextProductNumber).padStart(3, '0')}`;
-            nextProductNumber += 1;
-            products.push({ code, ...productData });
+        if (!productForm.reportValidity()) {
+            return;
         }
 
-        productDialog.close();
-        renderProducts();
+        const formData = new FormData(productForm);
+        const existingProduct = editingId === null
+            ? null
+            : products.find((product) => product.id === editingId);
+        const updatedProduct = {
+            id: editingId ?? nextProductId,
+            nombre: String(formData.get('nombre')).trim(),
+            categoria: String(formData.get('categoria')),
+            precio: Number(formData.get('precio')),
+            stock: Number(formData.get('stock')),
+            stockMinimo: Number(formData.get('stockMinimo')),
+            productor: String(formData.get('productor')).trim(),
+            ciudad: String(formData.get('ciudad')),
+            organico: formData.has('organico'),
+            fechaRegistro: String(formData.get('fechaRegistro')),
+            activo: existingProduct?.activo ?? true
+        };
+        const nextProducts = editingId === null
+            ? [...products, updatedProduct]
+            : products.map((product) => product.id === editingId ? updatedProduct : product);
+
+        if (persistProducts(nextProducts)) {
+            productDialog.close();
+        }
     });
 
     tableBody.addEventListener('click', (event) => {
@@ -258,7 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const product = products.find((item) => item.code === button.dataset.code);
+        const id = Number(button.dataset.id);
+        const product = products.find((item) => item.id === id);
         if (!product) {
             return;
         }
@@ -266,12 +388,12 @@ document.addEventListener('DOMContentLoaded', () => {
             openProductDialog(product);
         } else if (
             button.dataset.action === 'delete'
-            && (!confirmDelete.checked || window.confirm(`¿Eliminar ${product.name} (${product.code})?`))
+            && (!confirmDelete.checked || window.confirm(`¿Eliminar ${product.nombre} (ECO${String(id).padStart(3, '0')})?`))
         ) {
-            products.splice(products.indexOf(product), 1);
-            renderProducts();
+            const nextProducts = products.filter((item) => item.id !== id);
+            persistProducts(nextProducts);
         }
     });
 
-    renderProducts();
+    loadProducts();
 });
