@@ -94,6 +94,22 @@
                     </article>
                 </section>
 
+                <section class="dashboard-panel category-chart-panel" aria-labelledby="category-chart-title">
+                    <div class="inventario-header">
+                        <div>
+                            <h2 class="inventario-titulo" id="category-chart-title">Productos por categoría</h2>
+                            <p class="inventario-subtitulo">Cantidad de productos activos en cada categoría.</p>
+                        </div>
+                    </div>
+                    <p id="category-chart-status" class="chart-status" role="status" aria-live="polite"></p>
+                    <div class="category-chart-container">
+                        <canvas id="category-chart" role="img" aria-label="Gráfico de productos por categoría">
+                            Gráfico de productos por categoría.
+                        </canvas>
+                        <ul id="category-chart-fallback" class="category-chart-fallback" aria-label="Productos por categoría" hidden></ul>
+                    </div>
+                </section>
+
                 <!-- Sección de Tabla de Productos / Inventario (Punto del Taller) -->
                 <section id="productos-section" class="inventario-section">
                     <div class="inventario-header">
@@ -104,8 +120,55 @@
                         Cargando y validando el catálogo...
                     </p>
 
+                    <div class="product-filters" aria-label="Filtros de productos">
+                        <label>
+                            Categoría
+                            <select id="category-filter">
+                                <option value="">Todas las categorías</option>
+                                <option>Frutas y verduras</option>
+                                <option>Despensa</option>
+                                <option>Cuidado personal</option>
+                                <option>Hogar sostenible</option>
+                            </select>
+                        </label>
+                        <label>
+                            Ciudad
+                            <select id="city-filter">
+                                <option value="">Todas las ciudades</option>
+                                <option>Bucaramanga</option>
+                                <option>Floridablanca</option>
+                                <option>Girón</option>
+                                <option>Bogotá</option>
+                                <option>Medellín</option>
+                                <option>Cali</option>
+                                <option>Tunja</option>
+                                <option>Cúcuta</option>
+                            </select>
+                        </label>
+                        <label>
+                            Estado del inventario
+                            <select id="status-filter">
+                                <option value="">Todos los estados</option>
+                                <option>Disponible</option>
+                                <option>Stock bajo</option>
+                                <option>Agotado</option>
+                            </select>
+                        </label>
+                        <button type="button" class="btn btn-outline" id="clear-filters">Limpiar filtros</button>
+                    </div>
+
+                    <div class="catalog-display-controls">
+                        <p id="products-result-count" class="products-result-count" role="status" aria-live="polite"></p>
+                        <div class="view-toggle" role="group" aria-label="Vista del catálogo">
+                            <button type="button" class="btn btn-small is-active" id="show-cards" aria-pressed="true">Tarjetas</button>
+                            <button type="button" class="btn btn-small btn-outline" id="show-table" aria-pressed="false">Tabla</button>
+                        </div>
+                    </div>
+
+                    <div id="products-card-grid" class="products-card-grid" aria-live="polite"></div>
+
                     <!-- Contenedor responsive para desplazamiento horizontal en móviles -->
-                    <div class="tabla-responsive-container">
+                    <div id="products-table-container" class="tabla-responsive-container" hidden>
                         <table class="tabla-productos">
                             <thead>
                                 <tr>
@@ -136,10 +199,7 @@
                         <h2 class="inventario-titulo">Configuración</h2>
                         <span class="inventario-subtitulo">Preferencias de administración del catálogo.</span>
                     </div>
-                    <label class="setting-option">
-                        <input id="confirm-delete" type="checkbox" checked>
-                        Confirmar antes de eliminar un producto
-                    </label>
+                    <p class="page-subtitle">Siempre se solicitará confirmación antes de eliminar un producto.</p>
                 </section>
 
             </div>
@@ -213,6 +273,7 @@
         </form>
     </dialog>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
     <script src="validacion.js" defer></script>
     <script src="productos-ejemplo.js" defer></script>
     <script src="dashboard.js" defer></script>

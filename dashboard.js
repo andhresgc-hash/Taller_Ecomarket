@@ -6,11 +6,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const addProductButton = document.getElementById('add-product');
     const productDialog = document.getElementById('product-dialog');
     const productForm = document.getElementById('product-form');
-    const confirmDelete = document.getElementById('confirm-delete');
     const datasetStatus = document.getElementById('dataset-status');
+    const categoryFilter = document.getElementById('category-filter');
+    const cityFilter = document.getElementById('city-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const clearFiltersButton = document.getElementById('clear-filters');
+    const resultCount = document.getElementById('products-result-count');
+    const cardsContainer = document.getElementById('products-card-grid');
+    const tableContainer = document.getElementById('products-table-container');
+    const showCardsButton = document.getElementById('show-cards');
+    const showTableButton = document.getElementById('show-table');
+    const categoryChartCanvas = document.getElementById('category-chart');
+    const categoryChartFallback = document.getElementById('category-chart-fallback');
+    const categoryChartStatus = document.getElementById('category-chart-status');
     const storageKey = 'ecomarket-products-v2';
     const numberFormat = new Intl.NumberFormat('es-CO');
     const validator = window.validarProductos;
+    const categories = [
+        'Frutas y verduras',
+        'Despensa',
+        'Cuidado personal',
+        'Hogar sostenible'
+    ];
 
     if (
         !menuToggle
@@ -19,6 +36,18 @@ document.addEventListener('DOMContentLoaded', () => {
         || !productDialog
         || !productForm
         || !datasetStatus
+        || !categoryFilter
+        || !cityFilter
+        || !statusFilter
+        || !clearFiltersButton
+        || !resultCount
+        || !cardsContainer
+        || !tableContainer
+        || !showCardsButton
+        || !showTableButton
+        || !categoryChartCanvas
+        || !categoryChartFallback
+        || !categoryChartStatus
         || !Array.isArray(window.productosEjemplo)
         || typeof validator !== 'function'
     ) {
@@ -37,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let products = [];
     let editingId = null;
     let nextProductId = 1;
+    let categoryChart = null;
+    let catalogView = 'cards';
 
     function showStatus(message, isError = false) {
         datasetStatus.textContent = message;
@@ -62,13 +93,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return { label: 'Disponible', className: 'badge-disponible' };
     }
 
+    function createActionButton(action, product) {
+        const button = document.createElement('button');
+        const actionLabel = action === 'edit' ? 'Editar' : 'Eliminar';
+        button.type = 'button';
+        button.className = `btn-accion ${action === 'edit' ? 'btn-editar' : 'btn-eliminar'}`;
+        button.dataset.action = action;
+        button.dataset.id = String(product.id);
+        button.setAttribute('aria-label', `${actionLabel} ECO${String(product.id).padStart(3, '0')}`);
+        button.textContent = actionLabel;
+        return button;
+    }
+
     function renderProducts() {
         const query = searchInput?.value.trim().toLocaleLowerCase('es') || '';
+        const activeProducts = products.filter((product) => product.activo);
         const visibleProducts = products.filter((product) => {
             if (!product.activo) {
                 return false;
             }
             const status = getProductStatus(product).label;
+            if (
+                (categoryFilter.value && product.categoria !== categoryFilter.value)
+                || (cityFilter.value && product.ciudad !== cityFilter.value)
+                || (statusFilter.value && status !== statusFilter.value)
+            ) {
+                return false;
+            }
             const searchableText = [
                 product.id,
                 product.nombre,
@@ -85,17 +136,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         tableBody.replaceChildren();
+        cardsContainer.replaceChildren();
+        resultCount.textContent = `Mostrando ${visibleProducts.length} de ${activeProducts.length} productos.`;
 
         if (visibleProducts.length === 0) {
+            const hasFilters = query || categoryFilter.value || cityFilter.value || statusFilter.value;
+            const emptyMessage = hasFilters
+                ? 'No se encontraron productos con esos criterios.'
+                : 'No hay productos activos para mostrar.';
             const row = document.createElement('tr');
             const cell = document.createElement('td');
             cell.colSpan = 7;
             cell.className = 'empty-table-message';
-            cell.textContent = query
-                ? 'No se encontraron productos con esa búsqueda.'
-                : 'No hay productos activos para mostrar.';
+            cell.textContent = emptyMessage;
             row.append(cell);
             tableBody.append(row);
+            const emptyCardMessage = document.createElement('p');
+            emptyCardMessage.className = 'empty-table-message';
+            emptyCardMessage.textContent = emptyMessage;
+            cardsContainer.append(emptyCardMessage);
         }
 
         visibleProducts.forEach((product) => {
@@ -110,8 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusCell = document.createElement('td');
             const actionsCell = document.createElement('td');
             const statusBadge = document.createElement('span');
-            const editButton = document.createElement('button');
-            const deleteButton = document.createElement('button');
             const status = getProductStatus(product);
 
             productCell.className = 'td-producto';
@@ -130,30 +187,50 @@ document.addEventListener('DOMContentLoaded', () => {
             statusCell.append(statusBadge);
 
             actionsCell.className = 'td-acciones';
-            editButton.type = 'button';
-            editButton.className = 'btn-accion btn-editar';
-            editButton.dataset.action = 'edit';
-            editButton.dataset.id = String(product.id);
-            editButton.setAttribute('aria-label', `Editar ECO${String(product.id).padStart(3, '0')}`);
-            editButton.textContent = 'Editar';
-            deleteButton.type = 'button';
-            deleteButton.className = 'btn-accion btn-eliminar';
-            deleteButton.dataset.action = 'delete';
-            deleteButton.dataset.id = String(product.id);
-            deleteButton.setAttribute('aria-label', `Eliminar ECO${String(product.id).padStart(3, '0')}`);
-            deleteButton.textContent = 'Eliminar';
-            actionsCell.append(editButton, deleteButton);
+            actionsCell.append(createActionButton('edit', product), createActionButton('delete', product));
             row.append(productCell, categoryCell, priceCell, stockCell, producerCell, statusCell, actionsCell);
             tableBody.append(row);
+
+            const card = document.createElement('article');
+            const cardHeader = document.createElement('div');
+            const codeLabel = document.createElement('span');
+            const cardStatus = document.createElement('span');
+            const cardName = document.createElement('h3');
+            const cardDetails = document.createElement('p');
+            const cardPrice = document.createElement('p');
+            const cardInventory = document.createElement('p');
+            const cardActions = document.createElement('div');
+
+            card.className = 'card catalog-product-card';
+            cardHeader.className = 'catalog-product-header';
+            codeLabel.className = 'td-codigo';
+            codeLabel.textContent = `ECO${String(product.id).padStart(3, '0')}`;
+            cardStatus.className = `badge ${status.className}`;
+            cardStatus.textContent = status.label;
+            cardHeader.append(codeLabel, cardStatus);
+            cardName.className = 'producto-title';
+            cardName.textContent = product.nombre;
+            cardDetails.className = 'catalog-product-details';
+            cardDetails.textContent = `${product.categoria} · ${product.ciudad}`;
+            cardPrice.className = 'catalog-product-price';
+            cardPrice.textContent = `$${numberFormat.format(product.precio)} COP`;
+            cardInventory.className = 'catalog-product-inventory';
+            cardInventory.textContent = `Stock: ${product.stock} · ${product.productor}`;
+            cardActions.className = 'catalog-product-actions';
+            cardActions.append(createActionButton('edit', product), createActionButton('delete', product));
+            card.append(cardHeader, cardName, cardDetails, cardPrice, cardInventory, cardActions);
+            cardsContainer.append(card);
         });
 
+        cardsContainer.hidden = catalogView !== 'cards';
+        tableContainer.hidden = catalogView !== 'table';
         updateSummary();
     }
 
     function updateSummary() {
         const activeProducts = products.filter((product) => product.activo);
         const lowStockCount = activeProducts.filter(
-            (product) => product.stock > 0 && product.stock <= product.stockMinimo
+            (product) => product.stock <= product.stockMinimo
         ).length;
         const inventoryValue = activeProducts.reduce(
             (total, product) => total + product.precio * product.stock,
@@ -176,6 +253,102 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.textContent = `${producer} — ${count} ${count === 1 ? 'producto' : 'productos'}`;
                 producerSummary.append(item);
             });
+        }
+
+        updateCategoryChart(activeProducts);
+    }
+
+    function updateCategoryChart(activeProducts) {
+        const categoryCounts = categories.map(
+            (category) => activeProducts.filter((product) => product.categoria === category).length
+        );
+        const chartDescription = categories
+            .map((category, index) => `${category}: ${categoryCounts[index]}`)
+            .join('; ');
+
+        if (typeof window.Chart === 'function') {
+            categoryChartCanvas.hidden = false;
+            categoryChartFallback.hidden = true;
+            categoryChartCanvas.setAttribute('aria-label', `Productos por categoría. ${chartDescription}`);
+
+            if (!categoryChart) {
+                categoryChart = new window.Chart(categoryChartCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: categories,
+                        datasets: [{
+                            label: 'Productos activos',
+                            data: categoryCounts,
+                            backgroundColor: ['#9acb85', '#6fae61', '#d96b43', '#4b7550'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { precision: 0 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            } else {
+                categoryChart.data.datasets[0].data = categoryCounts;
+                categoryChart.update();
+            }
+            categoryChartStatus.textContent = 'Gráfico actualizado.';
+            return;
+        }
+
+        categoryChartCanvas.hidden = true;
+        categoryChartFallback.hidden = false;
+        categoryChartFallback.replaceChildren();
+        const maximumCount = Math.max(...categoryCounts, 1);
+        categories.forEach((category, index) => {
+            const item = document.createElement('li');
+            const label = document.createElement('span');
+            const count = document.createElement('strong');
+            const bar = document.createElement('span');
+
+            item.className = 'category-chart-item';
+            label.textContent = category;
+            count.textContent = String(categoryCounts[index]);
+            bar.className = 'category-chart-bar';
+            bar.setAttribute('aria-hidden', 'true');
+            bar.style.width = `${(categoryCounts[index] / maximumCount) * 100}%`;
+            item.append(label, count, bar);
+            categoryChartFallback.append(item);
+        });
+        categoryChartStatus.textContent = 'Chart.js no está disponible; se muestra el resumen equivalente.';
+    }
+
+    function handleProductAction(event) {
+        if (!(event.target instanceof Element)) {
+            return;
+        }
+        const button = event.target.closest('button[data-action]');
+        if (!button) {
+            return;
+        }
+
+        const id = Number(button.dataset.id);
+        const product = products.find((item) => item.id === id);
+        if (!product) {
+            return;
+        }
+        if (button.dataset.action === 'edit') {
+            openProductDialog(product);
+        } else if (
+            button.dataset.action === 'delete'
+            && window.confirm(`¿Eliminar ${product.nombre} (ECO${String(id).padStart(3, '0')})?`)
+        ) {
+            const nextProducts = products.filter((item) => item.id !== id);
+            persistProducts(nextProducts);
         }
     }
 
@@ -229,6 +402,36 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadProducts() {
         addProductButton.disabled = true;
         try {
+            let savedCatalog;
+            try {
+                savedCatalog = localStorage.getItem(storageKey);
+            } catch (error) {
+                showStatus(`No se pudieron leer los cambios guardados: ${error.message}`, true);
+                return;
+            }
+
+            if (savedCatalog !== null) {
+                let parsedCatalog;
+                try {
+                    parsedCatalog = JSON.parse(savedCatalog);
+                } catch (error) {
+                    showStatus(`Los cambios guardados no contienen JSON válido: ${error.message}`, true);
+                    return;
+                }
+                const savedErrors = validator(parsedCatalog);
+                if (savedErrors.length > 0) {
+                    showValidationErrors(savedErrors);
+                    return;
+                }
+
+                products = parsedCatalog;
+                nextProductId = products.reduce((highest, product) => Math.max(highest, product.id), 0) + 1;
+                renderProducts();
+                addProductButton.disabled = false;
+                showStatus(`Catálogo cargado desde este navegador: ${products.filter((product) => product.activo).length} productos activos.`);
+                return;
+            }
+
             const response = await fetch('productos.json');
             if (!response.ok) {
                 throw new Error(`No se pudo cargar productos.json (HTTP ${response.status}).`);
@@ -269,22 +472,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             products = mergedCatalog;
-            try {
-                const savedCatalog = localStorage.getItem(storageKey);
-                if (savedCatalog !== null) {
-                    const parsedCatalog = JSON.parse(savedCatalog);
-                    const savedErrors = validator(parsedCatalog);
-                    if (savedErrors.length > 0) {
-                        showValidationErrors(savedErrors);
-                        return;
-                    }
-                    products = parsedCatalog;
-                }
-            } catch (error) {
-                showStatus(`No se pudieron leer los cambios guardados: ${error.message}`, true);
-                return;
-            }
-
             nextProductId = products.reduce((highest, product) => Math.max(highest, product.id), 0) + 1;
             renderProducts();
             addProductButton.disabled = false;
@@ -337,6 +524,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('close-product-dialog').addEventListener('click', () => productDialog.close());
     document.getElementById('cancel-product-dialog').addEventListener('click', () => productDialog.close());
     searchInput?.addEventListener('input', renderProducts);
+    categoryFilter.addEventListener('change', renderProducts);
+    cityFilter.addEventListener('change', renderProducts);
+    statusFilter.addEventListener('change', renderProducts);
+    showCardsButton.addEventListener('click', () => {
+        catalogView = 'cards';
+        showCardsButton.classList.add('is-active');
+        showCardsButton.classList.remove('btn-outline');
+        showCardsButton.setAttribute('aria-pressed', 'true');
+        showTableButton.classList.remove('is-active');
+        showTableButton.classList.add('btn-outline');
+        showTableButton.setAttribute('aria-pressed', 'false');
+        renderProducts();
+    });
+    showTableButton.addEventListener('click', () => {
+        catalogView = 'table';
+        showTableButton.classList.add('is-active');
+        showTableButton.classList.remove('btn-outline');
+        showTableButton.setAttribute('aria-pressed', 'true');
+        showCardsButton.classList.remove('is-active');
+        showCardsButton.classList.add('btn-outline');
+        showCardsButton.setAttribute('aria-pressed', 'false');
+        renderProducts();
+    });
+    clearFiltersButton.addEventListener('click', () => {
+        if (searchInput) {
+            searchInput.value = '';
+        }
+        categoryFilter.value = '';
+        cityFilter.value = '';
+        statusFilter.value = '';
+        renderProducts();
+    });
 
     productForm.addEventListener('submit', (event) => {
         event.preventDefault();
@@ -370,30 +589,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    tableBody.addEventListener('click', (event) => {
-        if (!(event.target instanceof Element)) {
-            return;
-        }
-        const button = event.target.closest('button[data-action]');
-        if (!button) {
-            return;
-        }
-
-        const id = Number(button.dataset.id);
-        const product = products.find((item) => item.id === id);
-        if (!product) {
-            return;
-        }
-        if (button.dataset.action === 'edit') {
-            openProductDialog(product);
-        } else if (
-            button.dataset.action === 'delete'
-            && (!confirmDelete.checked || window.confirm(`¿Eliminar ${product.nombre} (ECO${String(id).padStart(3, '0')})?`))
-        ) {
-            const nextProducts = products.filter((item) => item.id !== id);
-            persistProducts(nextProducts);
-        }
-    });
+    tableBody.addEventListener('click', handleProductAction);
+    cardsContainer.addEventListener('click', handleProductAction);
 
     loadProducts();
 });
